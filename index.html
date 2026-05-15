@@ -43,16 +43,6 @@
         #searchResults::-webkit-scrollbar { width: 5px; }
         #searchResults::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
 
-        .spinner {
-            border: 3px solid #e5e7eb;
-            border-top: 3px solid #6366f1;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 0.7s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
         .strength-bar {
             height: 6px;
             border-radius: 99px;
@@ -82,6 +72,12 @@
         .badge-geo { background: #d1fae5; color: #047857; }
         .badge-hist { background: #fef2f2; color: #b91c1c; }
         .badge-socio { background: #f5f3ff; color: #7c3aed; }
+
+        .cors-warning {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+        }
 
         @media (max-width: 640px) {
             .stat-value { font-size: 1.375rem !important; }
@@ -115,6 +111,22 @@
 
         <!-- ===================== MAIN ===================== -->
         <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+
+            <!-- CORS Warning Banner -->
+            <div id="corsWarning" class="hidden cors-warning rounded-xl px-4 py-3 text-sm mb-4 flex items-start gap-3">
+                <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                    <p class="font-medium">⚠️ Data dari Google Sheets tidak bisa diakses langsung karena CORS.</p>
+                    <p class="text-xs mt-1">Saat ini menggunakan <strong>data dummy</strong> agar aplikasi tetap bisa dicoba. Untuk menggunakan data asli, lihat panduan di bawah.</p>
+                </div>
+                <button id="closeCorsWarning" class="text-amber-600 hover:text-amber-800 ml-auto flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
 
             <!-- Loading Skeleton -->
             <div id="loadingState" class="space-y-5">
@@ -365,6 +377,37 @@
                 </button>
             </div>
 
+            <!-- Panduan CORS -->
+            <div id="corsGuide" class="hidden mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">📖 Cara Menggunakan Data Asli dari Google Sheets</h3>
+                <div class="space-y-3 text-sm text-gray-600">
+                    <p>Karena Google Sheets tidak mengizinkan akses langsung dari website lokal (CORS), ada beberapa solusi:</p>
+                    
+                    <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+                        <p class="font-medium text-gray-800">🔧 Opsi 1: Gunakan CORS Proxy (termudah)</p>
+                        <p class="text-xs">Ganti URL di kode dengan:</p>
+                        <code class="block bg-gray-800 text-green-300 text-xs p-2 rounded-lg break-all mt-1">
+                            https://api.allorigins.win/raw?url=https://docs.google.com/spreadsheets/d/e/2PACX-1vTSLm28qEzTykpgL_Q22RtAc8Eldm_d1_DYwg9VzQTkLtUyPtg1M0ejP2d5R3D2YMJBAzVIDciFMTD5/pub?gid=0&single=true&output=csv
+                        </code>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+                        <p class="font-medium text-gray-800">📂 Opsi 2: Download CSV dan simpan lokal</p>
+                        <p class="text-xs">Download file CSV dari Google Sheets, lalu taruh di folder yang sama dengan index.html. Ganti URL dengan nama file.</p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 space-y-2">
+                        <p class="font-medium text-gray-800">🌐 Opsi 3: Gunakan GitHub Pages / Netlify</p>
+                        <p class="text-xs">Hosting aplikasi ini di GitHub Pages atau Netlify — CORS tidak masalah di server.</p>
+                    </div>
+
+                    <div class="bg-amber-50 rounded-xl p-3 text-xs text-amber-700">
+                        <strong>Sementara ini aplikasi berjalan dengan data dummy</strong> (7 siswa dari 3 program). 
+                        Anda bisa langsung mencoba fitur-fitur lengkapnya.
+                    </div>
+                </div>
+            </div>
+
         </main>
 
         <!-- FOOTER -->
@@ -383,69 +426,82 @@
 
         /**
          * ─────────────────────────────────────────────────────────────
-         *  📌 URL GOOGLE SHEETS CSV — SUDAH TERPASANG
+         *  📌 URL GOOGLE SHEETS CSV
+         *  Jika mengalami CORS error, gunakan proxy:
+         *  const PROXY = 'https://api.allorigins.win/raw?url=';
+         *  const CSV_URL = PROXY + 'https://docs.google.com/...';
          * ─────────────────────────────────────────────────────────────
          */
-        const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSLm28qEzTykpgL_Q22RtAc8Eldm_d1_DYwg9VzQTkLtUyPtg1M0ejP2d5R3D2YMJBAzVIDciFMTD5/pub?output=csv';
+        const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSLm28qEzTykpgL_Q22RtAc8Eldm_d1_DYwg9VzQTkLtUyPtg1M0ejP2d5R3D2YMJBAzVIDciFMTD5/pub?gid=0&single=true&output=csv';
 
-        /** Definisi mata pelajaran per program */
+        // Jika ingin pakai CORS proxy, uncomment baris di bawah:
+        // const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        // const GOOGLE_SHEETS_CSV_URL = CORS_PROXY + 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTSLm28qEzTykpgL_Q22RtAc8Eldm_d1_DYwg9VzQTkLtUyPtg1M0ejP2d5R3D2YMJBAzVIDciFMTD5/pub?gid=0&single=true&output=csv';
+
+        /**
+         * Definisi mata pelajaran per program — LOWERCASE (sesuai CSV Anda)
+         */
         const PROGRAM_SUBJECTS = {
-            'XI IPA': ['Matematika', 'Bahasa Inggris', 'Bahasa Indonesia', 'Kimia', 'Biologi', 'Fisika'],
-            'XI IPS': ['Matematika', 'Bahasa Inggris', 'Bahasa Indonesia', 'Ekonomi', 'Geografi', 'Sejarah', 'Sosiologi'],
-            'X EXC': ['Matematika', 'Bahasa Inggris', 'Bahasa Indonesia', 'Kimia', 'Biologi', 'Fisika', 'Ekonomi', 'Geografi', 'Sejarah', 'Sosiologi'],
+            'XI IPA': ['matematika', 'bahasa inggris', 'bahasa indonesia', 'kimia', 'biologi', 'fisika'],
+            'XI IPS': ['matematika', 'bahasa inggris', 'bahasa indonesia', 'ekonomi', 'geografi', 'sejarah', 'sosiologi'],
+            'X EXC': ['matematika', 'bahasa inggris', 'bahasa indonesia', 'kimia', 'biologi', 'fisika', 'ekonomi', 'geografi', 'sejarah', 'sosiologi'],
+        };
+
+        /** Nama display untuk setiap mapel */
+        const SUBJECT_DISPLAY = {
+            'matematika': 'Matematika',
+            'bahasa inggris': 'Bahasa Inggris',
+            'bahasa indonesia': 'Bahasa Indonesia',
+            'kimia': 'Kimia',
+            'biologi': 'Biologi',
+            'fisika': 'Fisika',
+            'ekonomi': 'Ekonomi',
+            'geografi': 'Geografi',
+            'sejarah': 'Sejarah',
+            'sosiologi': 'Sosiologi',
         };
 
         /** Warna untuk setiap mapel */
         const SUBJECT_COLORS = {
-            'Matematika': { badge: 'badge-math', bar: '#4338ca' },
-            'Bahasa Inggris': { badge: 'badge-eng', bar: '#be185d' },
-            'Bahasa Indonesia': { badge: 'badge-indo', bar: '#b45309' },
-            'Kimia': { badge: 'badge-chem', bar: '#1d4ed8' },
-            'Biologi': { badge: 'badge-bio', bar: '#15803d' },
-            'Fisika': { badge: 'badge-phys', bar: '#6d28d9' },
-            'Ekonomi': { badge: 'badge-econ', bar: '#0f766e' },
-            'Geografi': { badge: 'badge-geo', bar: '#047857' },
-            'Sejarah': { badge: 'badge-hist', bar: '#b91c1c' },
-            'Sosiologi': { badge: 'badge-socio', bar: '#7c3aed' },
+            'matematika': { badge: 'badge-math', bar: '#4338ca' },
+            'bahasa inggris': { badge: 'badge-eng', bar: '#be185d' },
+            'bahasa indonesia': { badge: 'badge-indo', bar: '#b45309' },
+            'kimia': { badge: 'badge-chem', bar: '#1d4ed8' },
+            'biologi': { badge: 'badge-bio', bar: '#15803d' },
+            'fisika': { badge: 'badge-phys', bar: '#6d28d9' },
+            'ekonomi': { badge: 'badge-econ', bar: '#0f766e' },
+            'geografi': { badge: 'badge-geo', bar: '#047857' },
+            'sejarah': { badge: 'badge-hist', bar: '#b91c1c' },
+            'sosiologi': { badge: 'badge-socio', bar: '#7c3aed' },
         };
 
-        /** Nilai maks ideal tiap mapel */
         const MAX_PER_SUBJECT = 100;
 
-        // ─── DATA DUMMY (fallback jika CSV gagal) ───
+        // ─── DATA DUMMY ───
         const DUMMY_DATA = [
-            // XI IPA
-            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-01-14', Matematika: 78, 'Bahasa Inggris': 72, 'Bahasa Indonesia': 80, Kimia: 70, Biologi: 75, Fisika: 68 },
-            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-02-11', Matematika: 82, 'Bahasa Inggris': 76, 'Bahasa Indonesia': 83, Kimia: 74, Biologi: 78, Fisika: 72 },
-            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-03-10', Matematika: 86, 'Bahasa Inggris': 80, 'Bahasa Indonesia': 86, Kimia: 79, Biologi: 82, Fisika: 76 },
-            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-04-08', Matematika: 90, 'Bahasa Inggris': 82, 'Bahasa Indonesia': 88, Kimia: 83, Biologi: 86, Fisika: 80 },
-
-            { nopes: '2026002', nama: 'Bella Safira', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-01-14', Matematika: 65, 'Bahasa Inggris': 70, 'Bahasa Indonesia': 72, Kimia: 60, Biologi: 68, Fisika: 62 },
-            { nopes: '2026002', nama: 'Bella Safira', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-02-11', Matematika: 70, 'Bahasa Inggris': 74, 'Bahasa Indonesia': 75, Kimia: 65, Biologi: 72, Fisika: 66 },
-            { nopes: '2026002', nama: 'Bella Safira', program: 'XI IPA', kelas: 'XI IPA 1', kelas_walas: 'Bu Sri Wahyuni', tanggal: '2026-03-10', Matematika: 74, 'Bahasa Inggris': 76, 'Bahasa Indonesia': 78, Kimia: 70, Biologi: 75, Fisika: 70 },
-
-            { nopes: '2026003', nama: 'Chandra Wijaya', program: 'XI IPA', kelas: 'XI IPA 2', kelas_walas: 'Pak Budi Hartono', tanggal: '2026-01-16', Matematika: 88, 'Bahasa Inggris': 74, 'Bahasa Indonesia': 76, Kimia: 85, Biologi: 80, Fisika: 82 },
-            { nopes: '2026003', nama: 'Chandra Wijaya', program: 'XI IPA', kelas: 'XI IPA 2', kelas_walas: 'Pak Budi Hartono', tanggal: '2026-02-13', Matematika: 91, 'Bahasa Inggris': 78, 'Bahasa Indonesia': 80, Kimia: 88, Biologi: 84, Fisika: 85 },
-            { nopes: '2026003', nama: 'Chandra Wijaya', program: 'XI IPA', kelas: 'XI IPA 2', kelas_walas: 'Pak Budi Hartono', tanggal: '2026-03-13', Matematika: 94, 'Bahasa Inggris': 80, 'Bahasa Indonesia': 82, Kimia: 90, Biologi: 87, Fisika: 88 },
-
-            // XI IPS
-            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelas_walas: 'Bu Ani Rahmawati', tanggal: '2026-01-15', Matematika: 72, 'Bahasa Inggris': 78, 'Bahasa Indonesia': 82, Ekonomi: 76, Geografi: 74, Sejarah: 70, Sosiologi: 72 },
-            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelas_walas: 'Bu Ani Rahmawati', tanggal: '2026-02-12', Matematika: 76, 'Bahasa Inggris': 80, 'Bahasa Indonesia': 84, Ekonomi: 80, Geografi: 78, Sejarah: 74, Sosiologi: 76 },
-            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelas_walas: 'Bu Ani Rahmawati', tanggal: '2026-03-12', Matematika: 80, 'Bahasa Inggris': 82, 'Bahasa Indonesia': 86, Ekonomi: 83, Geografi: 82, Sejarah: 78, Sosiologi: 80 },
-            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelas_walas: 'Bu Ani Rahmawati', tanggal: '2026-04-09', Matematika: 84, 'Bahasa Inggris': 84, 'Bahasa Indonesia': 88, Ekonomi: 86, Geografi: 84, Sejarah: 80, Sosiologi: 82 },
-
-            { nopes: '2026005', nama: 'Eko Prasetyo', program: 'XI IPS', kelas: 'XI IPS 2', kelas_walas: 'Pak Dodi Firmansyah', tanggal: '2026-01-17', Matematika: 60, 'Bahasa Inggris': 68, 'Bahasa Indonesia': 74, Ekonomi: 72, Geografi: 70, Sejarah: 66, Sosiologi: 70 },
-            { nopes: '2026005', nama: 'Eko Prasetyo', program: 'XI IPS', kelas: 'XI IPS 2', kelas_walas: 'Pak Dodi Firmansyah', tanggal: '2026-02-14', Matematika: 66, 'Bahasa Inggris': 72, 'Bahasa Indonesia': 76, Ekonomi: 76, Geografi: 74, Sejarah: 70, Sosiologi: 74 },
-            { nopes: '2026005', nama: 'Eko Prasetyo', program: 'XI IPS', kelas: 'XI IPS 2', kelas_walas: 'Pak Dodi Firmansyah', tanggal: '2026-03-14', Matematika: 72, 'Bahasa Inggris': 74, 'Bahasa Indonesia': 80, Ekonomi: 80, Geografi: 78, Sejarah: 74, Sosiologi: 76 },
-
-            // X EXC
-            { nopes: '2026006', nama: 'Farhan Maulana', program: 'X EXC', kelas: 'X EXC A', kelas_walas: 'Bu Rina Kartika', tanggal: '2026-01-20', Matematika: 82, 'Bahasa Inggris': 76, 'Bahasa Indonesia': 78, Kimia: 74, Biologi: 76, Fisika: 70, Ekonomi: 72, Geografi: 68, Sejarah: 70, Sosiologi: 74 },
-            { nopes: '2026006', nama: 'Farhan Maulana', program: 'X EXC', kelas: 'X EXC A', kelas_walas: 'Bu Rina Kartika', tanggal: '2026-02-17', Matematika: 86, 'Bahasa Inggris': 80, 'Bahasa Indonesia': 82, Kimia: 78, Biologi: 80, Fisika: 74, Ekonomi: 76, Geografi: 72, Sejarah: 74, Sosiologi: 78 },
-            { nopes: '2026006', nama: 'Farhan Maulana', program: 'X EXC', kelas: 'X EXC A', kelas_walas: 'Bu Rina Kartika', tanggal: '2026-03-17', Matematika: 90, 'Bahasa Inggris': 82, 'Bahasa Indonesia': 84, Kimia: 82, Biologi: 84, Fisika: 78, Ekonomi: 80, Geografi: 76, Sejarah: 78, Sosiologi: 80 },
-
-            { nopes: '2026007', nama: 'Gita Pramesti', program: 'X EXC', kelas: 'X EXC B', kelas_walas: 'Pak Adi Nugroho', tanggal: '2026-01-22', Matematika: 70, 'Bahasa Inggris': 74, 'Bahasa Indonesia': 76, Kimia: 68, Biologi: 72, Fisika: 66, Ekonomi: 74, Geografi: 70, Sejarah: 72, Sosiologi: 76 },
-            { nopes: '2026007', nama: 'Gita Pramesti', program: 'X EXC', kelas: 'X EXC B', kelas_walas: 'Pak Adi Nugroho', tanggal: '2026-02-19', Matematika: 74, 'Bahasa Inggris': 78, 'Bahasa Indonesia': 80, Kimia: 72, Biologi: 76, Fisika: 70, Ekonomi: 78, Geografi: 74, Sejarah: 76, Sosiologi: 80 },
-            { nopes: '2026007', nama: 'Gita Pramesti', program: 'X EXC', kelas: 'X EXC B', kelas_walas: 'Pak Adi Nugroho', tanggal: '2026-03-19', Matematika: 78, 'Bahasa Inggris': 80, 'Bahasa Indonesia': 82, Kimia: 76, Biologi: 80, Fisika: 74, Ekonomi: 80, Geografi: 78, Sejarah: 78, Sosiologi: 82 },
+            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '1', matematika: 78, 'bahasa inggris': 72, 'bahasa indonesia': 80, kimia: 70, biologi: 75, fisika: 68 },
+            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '2', matematika: 82, 'bahasa inggris': 76, 'bahasa indonesia': 83, kimia: 74, biologi: 78, fisika: 72 },
+            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '3', matematika: 86, 'bahasa inggris': 80, 'bahasa indonesia': 86, kimia: 79, biologi: 82, fisika: 76 },
+            { nopes: '2026001', nama: 'Ahmad Fauzi', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '4', matematika: 90, 'bahasa inggris': 82, 'bahasa indonesia': 88, kimia: 83, biologi: 86, fisika: 80 },
+            { nopes: '2026002', nama: 'Bella Safira', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '1', matematika: 65, 'bahasa inggris': 70, 'bahasa indonesia': 72, kimia: 60, biologi: 68, fisika: 62 },
+            { nopes: '2026002', nama: 'Bella Safira', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '2', matematika: 70, 'bahasa inggris': 74, 'bahasa indonesia': 75, kimia: 65, biologi: 72, fisika: 66 },
+            { nopes: '2026002', nama: 'Bella Safira', program: 'XI IPA', kelas: 'XI IPA 1', kelaswalas: 'Bu Sri Wahyuni', tanggal: '3', matematika: 74, 'bahasa inggris': 76, 'bahasa indonesia': 78, kimia: 70, biologi: 75, fisika: 70 },
+            { nopes: '2026003', nama: 'Chandra Wijaya', program: 'XI IPA', kelas: 'XI IPA 2', kelaswalas: 'Pak Budi Hartono', tanggal: '1', matematika: 88, 'bahasa inggris': 74, 'bahasa indonesia': 76, kimia: 85, biologi: 80, fisika: 82 },
+            { nopes: '2026003', nama: 'Chandra Wijaya', program: 'XI IPA', kelas: 'XI IPA 2', kelaswalas: 'Pak Budi Hartono', tanggal: '2', matematika: 91, 'bahasa inggris': 78, 'bahasa indonesia': 80, kimia: 88, biologi: 84, fisika: 85 },
+            { nopes: '2026003', nama: 'Chandra Wijaya', program: 'XI IPA', kelas: 'XI IPA 2', kelaswalas: 'Pak Budi Hartono', tanggal: '3', matematika: 94, 'bahasa inggris': 80, 'bahasa indonesia': 82, kimia: 90, biologi: 87, fisika: 88 },
+            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelaswalas: 'Bu Ani Rahmawati', tanggal: '1', matematika: 72, 'bahasa inggris': 78, 'bahasa indonesia': 82, ekonomi: 76, geografi: 74, sejarah: 70, sosiologi: 72 },
+            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelaswalas: 'Bu Ani Rahmawati', tanggal: '2', matematika: 76, 'bahasa inggris': 80, 'bahasa indonesia': 84, ekonomi: 80, geografi: 78, sejarah: 74, sosiologi: 76 },
+            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelaswalas: 'Bu Ani Rahmawati', tanggal: '3', matematika: 80, 'bahasa inggris': 82, 'bahasa indonesia': 86, ekonomi: 83, geografi: 82, sejarah: 78, sosiologi: 80 },
+            { nopes: '2026004', nama: 'Dewi Lestari', program: 'XI IPS', kelas: 'XI IPS 1', kelaswalas: 'Bu Ani Rahmawati', tanggal: '4', matematika: 84, 'bahasa inggris': 84, 'bahasa indonesia': 88, ekonomi: 86, geografi: 84, sejarah: 80, sosiologi: 82 },
+            { nopes: '2026005', nama: 'Eko Prasetyo', program: 'XI IPS', kelas: 'XI IPS 2', kelaswalas: 'Pak Dodi Firmansyah', tanggal: '1', matematika: 60, 'bahasa inggris': 68, 'bahasa indonesia': 74, ekonomi: 72, geografi: 70, sejarah: 66, sosiologi: 70 },
+            { nopes: '2026005', nama: 'Eko Prasetyo', program: 'XI IPS', kelas: 'XI IPS 2', kelaswalas: 'Pak Dodi Firmansyah', tanggal: '2', matematika: 66, 'bahasa inggris': 72, 'bahasa indonesia': 76, ekonomi: 76, geografi: 74, sejarah: 70, sosiologi: 74 },
+            { nopes: '2026005', nama: 'Eko Prasetyo', program: 'XI IPS', kelas: 'XI IPS 2', kelaswalas: 'Pak Dodi Firmansyah', tanggal: '3', matematika: 72, 'bahasa inggris': 74, 'bahasa indonesia': 80, ekonomi: 80, geografi: 78, sejarah: 74, sosiologi: 76 },
+            { nopes: '2026006', nama: 'Farhan Maulana', program: 'X EXC', kelas: 'X EXC A', kelaswalas: 'Bu Rina Kartika', tanggal: '1', matematika: 82, 'bahasa inggris': 76, 'bahasa indonesia': 78, kimia: 74, biologi: 76, fisika: 70, ekonomi: 72, geografi: 68, sejarah: 70, sosiologi: 74 },
+            { nopes: '2026006', nama: 'Farhan Maulana', program: 'X EXC', kelas: 'X EXC A', kelaswalas: 'Bu Rina Kartika', tanggal: '2', matematika: 86, 'bahasa inggris': 80, 'bahasa indonesia': 82, kimia: 78, biologi: 80, fisika: 74, ekonomi: 76, geografi: 72, sejarah: 74, sosiologi: 78 },
+            { nopes: '2026006', nama: 'Farhan Maulana', program: 'X EXC', kelas: 'X EXC A', kelaswalas: 'Bu Rina Kartika', tanggal: '3', matematika: 90, 'bahasa inggris': 82, 'bahasa indonesia': 84, kimia: 82, biologi: 84, fisika: 78, ekonomi: 80, geografi: 76, sejarah: 78, sosiologi: 80 },
+            { nopes: '2026007', nama: 'Gita Pramesti', program: 'X EXC', kelas: 'X EXC B', kelaswalas: 'Pak Adi Nugroho', tanggal: '1', matematika: 70, 'bahasa inggris': 74, 'bahasa indonesia': 76, kimia: 68, biologi: 72, fisika: 66, ekonomi: 74, geografi: 70, sejarah: 72, sosiologi: 76 },
+            { nopes: '2026007', nama: 'Gita Pramesti', program: 'X EXC', kelas: 'X EXC B', kelaswalas: 'Pak Adi Nugroho', tanggal: '2', matematika: 74, 'bahasa inggris': 78, 'bahasa indonesia': 80, kimia: 72, biologi: 76, fisika: 70, ekonomi: 78, geografi: 74, sejarah: 76, sosiologi: 80 },
+            { nopes: '2026007', nama: 'Gita Pramesti', program: 'X EXC', kelas: 'X EXC B', kelaswalas: 'Pak Adi Nugroho', tanggal: '3', matematika: 78, 'bahasa inggris': 80, 'bahasa indonesia': 82, kimia: 76, biologi: 80, fisika: 74, ekonomi: 80, geografi: 78, sejarah: 78, sosiologi: 82 },
         ];
 
 
@@ -461,6 +517,7 @@
             chartInstance: null,
             isLoading: true,
             allScoresFlat: [],
+            usingDummyData: false,
         };
 
         // ─── DOM refs ───
@@ -480,6 +537,9 @@
         const selectedPill = $('#selectedPill');
         const selectedName = $('#selectedName');
         const deselectBtn = $('#deselectBtn');
+        const corsWarning = $('#corsWarning');
+        const corsGuide = $('#corsGuide');
+        const closeCorsWarning = $('#closeCorsWarning');
 
         const avatarLetter = $('#avatarLetter');
         const studentName = $('#studentName');
@@ -523,34 +583,8 @@
             return PROGRAM_SUBJECTS[program] || PROGRAM_SUBJECTS['XI IPA'];
         }
 
-        /**
-         * Konversi tanggal teks Indonesia ke Date object
-         * Contoh: "14 Januari 2026" → Date
-         */
-        function parseIndonesianDate(dateStr) {
-            if (!dateStr) return null;
-            // Coba parse langsung ISO
-            const iso = new Date(dateStr);
-            if (!isNaN(iso.getTime())) return iso;
-
-            const bulanMap = {
-                'januari': 0, 'februari': 1, 'maret': 2, 'april': 3, 'mei': 4, 'juni': 5,
-                'juli': 6, 'agustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'desember': 11,
-                'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
-                'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
-            };
-
-            const parts = dateStr.trim().split(/\s+/);
-            if (parts.length >= 3) {
-                const day = parseInt(parts[0], 10);
-                const monthName = parts[1].toLowerCase();
-                const year = parseInt(parts[2], 10);
-                const month = bulanMap[monthName];
-                if (!isNaN(day) && month !== undefined && !isNaN(year)) {
-                    return new Date(year, month, day);
-                }
-            }
-            return null;
+        function displayName(subject) {
+            return SUBJECT_DISPLAY[subject] || subject;
         }
 
 
@@ -560,47 +594,77 @@
 
         async function loadData() {
             showLoading();
+            let useDummy = false;
+
             try {
                 let parsed = [];
 
                 if (GOOGLE_SHEETS_CSV_URL.trim()) {
-                    const resp = await fetch(GOOGLE_SHEETS_CSV_URL);
-                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                    const csv = await resp.text();
-                    // Gunakan delimiter ";"
-                    const result = Papa.parse(csv, { 
-                        header: true, 
-                        skipEmptyLines: true, 
-                        dynamicTyping: true,
-                        delimiter: ';'  // <── PENTING: delimiter semicolon
-                    });
-                    if (result.data && result.data.length > 0) {
-                        parsed = normalizeCSV(result.data);
-                    } else throw new Error('CSV kosong');
+                    try {
+                        const resp = await fetch(GOOGLE_SHEETS_CSV_URL);
+                        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                        const csv = await resp.text();
+                        
+                        const result = Papa.parse(csv, { 
+                            header: true, 
+                            skipEmptyLines: true, 
+                            dynamicTyping: true,
+                            delimiter: ';'
+                        });
+                        
+                        console.log('📊 Data mentah dari CSV:', result.data.slice(0, 3));
+                        
+                        if (result.data && result.data.length > 0) {
+                            parsed = normalizeCSV(result.data);
+                            if (parsed.length > 0) {
+                                console.log('✅ Data CSV berhasil dimuat!');
+                            } else {
+                                throw new Error('Data setelah normalisasi kosong');
+                            }
+                        } else {
+                            throw new Error('CSV kosong');
+                        }
+                    } catch (fetchErr) {
+                        // CORS error atau fetch error
+                        console.warn('⚠️ Gagal fetch CSV:', fetchErr.message);
+                        console.info('🔄 Fallback ke data dummy...');
+                        useDummy = true;
+                        parsed = DUMMY_DATA;
+                    }
                 } else {
-                    console.info('ℹ️  Gunakan data dummy.');
+                    console.info('ℹ️  URL CSV kosong, gunakan data dummy.');
+                    useDummy = true;
                     parsed = DUMMY_DATA;
                 }
 
                 if (!parsed.length) throw new Error('Tidak ada data');
 
                 state.rawData = parsed;
+                state.usingDummyData = useDummy;
                 buildStudentIndex(parsed);
                 computeAllScoresFlat();
                 hideLoading();
                 showMainUI();
-                updateDataStatus(true, parsed.length);
+                updateDataStatus(true, parsed.length, useDummy);
+
+                if (useDummy) {
+                    corsWarning.classList.remove('hidden');
+                    corsGuide.classList.remove('hidden');
+                }
 
             } catch (err) {
-                console.error('Gagal load:', err);
-                // Fallback ke dummy
+                console.error('❌ Gagal total:', err);
+                // Ultimate fallback
                 try {
                     state.rawData = DUMMY_DATA;
+                    state.usingDummyData = true;
                     buildStudentIndex(DUMMY_DATA);
                     computeAllScoresFlat();
                     hideLoading();
                     showMainUI();
                     updateDataStatus(true, DUMMY_DATA.length, true);
+                    corsWarning.classList.remove('hidden');
+                    corsGuide.classList.remove('hidden');
                     return;
                 } catch (_) {}
                 hideLoading();
@@ -610,16 +674,15 @@
         }
 
         /**
-         * ─────────────────────────────────────────────────────────────
-         *  📌 NORMALISASI CSV — Disesuaikan dengan header Anda:
-         *  nopes;nama;program;kelas;kelaswalas;tanggal;matematika;bahasa inggris;...
-         * ─────────────────────────────────────────────────────────────
+         * Normalisasi CSV — mapping header sesuai CSV Anda
          */
         function normalizeCSV(rows) {
             const allSubjects = Object.values(PROGRAM_SUBJECTS).flat();
             const uniqueSubjects = [...new Set(allSubjects)];
 
-            return rows.map(row => {
+            const result = [];
+
+            rows.forEach((row, idx) => {
                 const get = (keys) => {
                     for (const k of keys) {
                         if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
@@ -628,26 +691,27 @@
                 };
 
                 const entry = {
-                    nopes: String(get(['nopes', 'Nopes', 'NOPES', 'no_pes', 'No Pes', 'Nomor Peserta'])).trim(),
-                    nama: get(['nama', 'Nama', 'NAME', 'name', 'Nama Siswa']),
+                    nopes: String(get(['nopes', 'Nopes', 'NOPES', 'no_pes', 'No Pes'])).trim(),
+                    nama: get(['nama', 'Nama', 'NAME', 'name', 'Nama Siswa', 'Siswa']),
                     program: get(['program', 'Program', 'PROGRAM', 'jurusan', 'Jurusan']),
                     kelas: get(['kelas', 'Kelas', 'CLASS', 'class']),
-                    // Header Anda "kelaswalas" (tanpa underscore)
-                    kelas_walas: get(['kelaswalas', 'kelas_walas', 'Kelas Walas', 'walas', 'Walas', 'Wali Kelas']),
-                    tanggal: get(['tanggal', 'Tanggal', 'DATE', 'date', 'Tanggal Tes']),
+                    kelaswalas: get(['kelaswalas', 'kelas_walas', 'Kelas Walas', 'walas', 'Walas', 'Wali Kelas', 'wali_kelas']),
+                    tanggal: get(['tanggal', 'Tanggal', 'DATE', 'date', 'Tanggal Tes', 'tgl_tes']),
                 };
 
-                // Baca semua subject — header Anda pakai huruf kecil seperti "matematika", "bahasa inggris"
+                // Baca subject
                 for (const sub of uniqueSubjects) {
-                    // Cari dengan nama asli, lowercase, dengan/tanpa spasi
-                    const subLower = sub.toLowerCase();
-                    const subNoSpace = sub.replace(/ /g, '');
-                    const val = get([sub, subLower, subNoSpace, sub.replace(/ /g, '_')]);
+                    const val = get([sub, sub.toLowerCase(), sub.replace(/ /g, '_'), sub.replace(/ /g, '')]);
                     entry[sub] = val !== '' ? Number(val) : undefined;
                 }
 
-                return entry;
-            }).filter(row => row.nama && row.tanggal);
+                // Filter: harus ada nama dan tanggal
+                if (entry.nama && entry.tanggal) {
+                    result.push(entry);
+                }
+            });
+
+            return result;
         }
 
 
@@ -665,7 +729,7 @@
                         nama: name,
                         program: row.program || 'XI IPA',
                         kelas: row.kelas || '—',
-                        kelas_walas: row.kelas_walas || '—',
+                        kelaswalas: row.kelaswalas || '—',
                         records: [],
                     };
                 }
@@ -673,12 +737,16 @@
             });
 
             Object.values(map).forEach(s => {
+                // Urutkan berdasarkan tanggal (angka atau date)
                 s.records.sort((a, b) => {
-                    const dateA = parseIndonesianDate(a.tanggal);
-                    const dateB = parseIndonesianDate(b.tanggal);
-                    return dateA - dateB;
+                    const aNum = parseInt(a.tanggal);
+                    const bNum = parseInt(b.tanggal);
+                    if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+                    return parseDate(a.tanggal) - parseDate(b.tanggal);
                 });
+                
                 s.records.forEach((r, i) => { r.tesKe = i + 1; });
+                
                 const subjects = getSubjectsForProgram(s.program);
                 s.records.forEach(r => {
                     r.totalSkor = subjects.reduce((sum, sub) => sum + (r[sub] || 0), 0);
@@ -688,6 +756,50 @@
 
             state.students = map;
             state.studentNames = Object.keys(map).sort();
+
+            console.log('👥 Siswa ditemukan:', state.studentNames);
+        }
+
+        /** Parse berbagai format tanggal */
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            // Jika berupa angka (1,2,3...), treat sebagai urutan
+            const num = parseInt(dateStr);
+            if (!isNaN(num) && String(num) === String(dateStr).trim()) {
+                return new Date(2026, 0, num); // Jan 2026 + angka
+            }
+
+            // Mapping bulan Indonesia
+            const bulanMap = {
+                'januari': 0, 'februari': 1, 'maret': 2, 'april': 3, 'mei': 4, 'juni': 5,
+                'juli': 6, 'agustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'desember': 11,
+                'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+                'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
+            };
+
+            // ISO format
+            const iso = new Date(dateStr);
+            if (!isNaN(iso.getTime())) return iso;
+
+            // "15 Januari 2026"
+            const parts = dateStr.trim().split(/\s+/);
+            if (parts.length === 3) {
+                const day = parseInt(parts[0]);
+                const month = bulanMap[parts[1]?.toLowerCase()];
+                const year = parseInt(parts[2]);
+                if (day && month !== undefined && year) {
+                    return new Date(year, month, day);
+                }
+            }
+
+            // "2026-01-15"
+            const dashParts = dateStr.split('-');
+            if (dashParts.length === 3) {
+                return new Date(parseInt(dashParts[0]), parseInt(dashParts[1]) - 1, parseInt(dashParts[2]));
+            }
+
+            return new Date(dateStr);
         }
 
         function computeAllScoresFlat() {
@@ -743,8 +855,8 @@
 
         function updateDataStatus(ok, count, isFallback) {
             if (ok) {
-                const label = isFallback ? '(data dummy)' : `${count} data tes`;
-                dataStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-400"></span> ${count} data · ${label}`;
+                const label = isFallback ? '(data dummy)' : `${count} data dari spreadsheet`;
+                dataStatus.innerHTML = `<span class="w-2 h-2 rounded-full ${isFallback ? 'bg-amber-400' : 'bg-green-400'}"></span> ${count} data · ${label}`;
             } else {
                 dataStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-400"></span> Error`;
             }
@@ -841,13 +953,12 @@
             const avg = Math.round(scores.reduce((a, b) => a + b, 0) / total);
             const best = Math.max(...scores);
             const latestScore = scores[scores.length - 1];
-            const percentile = calculatePercentile(latestScore);
 
             avatarLetter.textContent = student.nama.charAt(0).toUpperCase();
             studentName.textContent = student.nama;
             studentNopes.textContent = `#${student.nopes}`;
             studentClass.textContent = student.kelas;
-            studentWalas.textContent = `Wali Kelas: ${student.kelas_walas}`;
+            studentWalas.textContent = `Wali Kelas: ${student.kelaswalas}`;
             programBadge.textContent = student.program;
             totalTes.textContent = total;
             avgScore.textContent = avg;
@@ -873,13 +984,17 @@
             if (state.chartInstance) { state.chartInstance.destroy(); state.chartInstance = null; }
 
             const ctx = canvas.getContext('2d');
+            
+            // Label: jika tanggal berupa angka, tampilkan "Tes ke-X"
             const labels = records.map((r, i) => {
-                const d = parseIndonesianDate(r.tanggal);
-                if (d) {
-                    return `${r.tesKe} (${d.toLocaleDateString('id-ID', { day:'numeric', month:'short' })})`;
+                const num = parseInt(r.tanggal);
+                if (!isNaN(num) && String(num) === String(r.tanggal).trim()) {
+                    return `Tes ke-${r.tesKe}`;
                 }
-                return `${r.tesKe}`;
+                const d = parseDate(r.tanggal);
+                return `Tes ke-${r.tesKe} (${d.toLocaleDateString('id-ID', { day:'numeric', month:'short' })})`;
             });
+            
             const data = records.map(r => r.totalSkor);
 
             const gradient = ctx.createLinearGradient(0, 0, 0, 260);
@@ -920,7 +1035,7 @@
                                 label: (ctx) => {
                                     const idx = ctx.dataIndex;
                                     const r = records[idx];
-                                    const subj = subjects.map(s => `${s}: ${r[s]||'—'}`).join(', ');
+                                    const subj = subjects.map(s => `${displayName(s)}: ${r[s]||'—'}`).join(', ');
                                     return [`Total: ${ctx.parsed.y}`, `Mapel: ${subj}`];
                                 }
                             }
@@ -970,14 +1085,14 @@
             let text = '';
             if (trend === 'meningkat') {
                 text = `Skor total ${trend} sebesar ${pct}% (${diff > 0 ? '+' : ''}${diff} poin). `;
-                text += `Peningkatan terbaik: <strong>${bestSubj}</strong> (${bestDelta > 0 ? '+' : ''}${bestDelta} poin). `;
-                text += worstDelta < 0 ? `Perhatikan <strong>${worstSubj}</strong> (${worstDelta} poin).` : 'Semua mapel meningkat.';
+                text += `Peningkatan terbaik: <strong>${displayName(bestSubj)}</strong> (${bestDelta > 0 ? '+' : ''}${bestDelta} poin). `;
+                text += worstDelta < 0 ? `Perhatikan <strong>${displayName(worstSubj)}</strong> (${worstDelta} poin).` : 'Semua mapel meningkat.';
             } else if (trend === 'menurun') {
                 text = `Skor total ${trend} ${pct}% (${diff} poin). `;
-                text += `Penurunan terdalam: <strong>${worstSubj}</strong> (${worstDelta} poin). `;
-                text += bestDelta > 0 ? `<strong>${bestSubj}</strong> masih naik ${bestDelta} poin.` : '';
+                text += `Penurunan terdalam: <strong>${displayName(worstSubj)}</strong> (${worstDelta} poin). `;
+                text += bestDelta > 0 ? `<strong>${displayName(bestSubj)}</strong> masih naik ${bestDelta} poin.` : '';
             } else {
-                text = `Skor total stabil di ${first} poin. ${bestSubj} ${bestDelta > 0 ? '+' : ''}${bestDelta}, ${worstSubj} ${worstDelta > 0 ? '+' : ''}${worstDelta}.`;
+                text = `Skor total stabil di ${first} poin. ${displayName(bestSubj)} ${bestDelta > 0 ? '+' : ''}${bestDelta}, ${displayName(worstSubj)} ${worstDelta > 0 ? '+' : ''}${worstDelta}.`;
             }
 
             insightText.innerHTML = text;
@@ -1000,13 +1115,14 @@
                 const prevScore = prev ? (prev[sub] || 0) : null;
                 const delta = prevScore !== null ? score - prevScore : null;
                 const color = SUBJECT_COLORS[sub] || { badge: 'bg-gray-100 text-gray-600', bar: '#6b7280' };
+                const display = displayName(sub);
 
                 const div = document.createElement('div');
                 div.className = 'flex items-center gap-3 sm:gap-4';
                 div.innerHTML = `
                     <div class="w-24 sm:w-28 flex-shrink-0">
                         <span class="inline-block text-[11px] font-medium px-2 py-0.5 rounded-md ${color.badge}">
-                            ${sub}
+                            ${display}
                         </span>
                     </div>
                     <div class="flex-1">
@@ -1024,11 +1140,13 @@
 
             generateStrengthsWeaknesses(records, subjects, student);
 
-            const d = parseIndonesianDate(latest.tanggal);
-            if (d) {
-                latestTesLabel.textContent = `Tes terbaru: ${d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}`;
+            const lastRecord = records[records.length - 1];
+            const num = parseInt(lastRecord.tanggal);
+            if (!isNaN(num) && String(num) === String(lastRecord.tanggal).trim()) {
+                latestTesLabel.textContent = `Tes ke-${lastRecord.tesKe}`;
             } else {
-                latestTesLabel.textContent = 'Tes terbaru';
+                const d = parseDate(lastRecord.tanggal);
+                latestTesLabel.textContent = `Tes terbaru: ${d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}`;
             }
         }
 
@@ -1054,7 +1172,7 @@
             if (strengths.length > 0) {
                 const top = strengths.slice(0, 3);
                 strengthsText.innerHTML = top.map(s =>
-                    `<strong>${s.name}</strong> (${s.score})`
+                    `<strong>${displayName(s.name)}</strong> (${s.score})`
                 ).join(' · ') + ` — di atas rata-rata (${Math.round(avg)}).`;
             } else {
                 strengthsText.textContent = 'Belum ada mapel yang menonjol di atas rata-rata. Tetap semangat berlatih!';
@@ -1063,7 +1181,7 @@
             if (weaknesses.length > 0) {
                 const bot = weaknesses.slice(0, 3);
                 weaknessesText.innerHTML = bot.map(s =>
-                    `<strong>${s.name}</strong> (${s.score})`
+                    `<strong>${displayName(s.name)}</strong> (${s.score})`
                 ).join(' · ') + ` — perlu ditingkatkan. Fokus belajar pada mapel ini.`;
             } else {
                 weaknessesText.textContent = 'Semua mapel sudah di atas rata-rata. Pertahankan!';
@@ -1146,7 +1264,7 @@
                             <th class="pb-2.5 pr-3 font-medium whitespace-nowrap">Tanggal</th>
                             <th class="pb-2.5 pr-3 font-medium whitespace-nowrap">Total</th>`;
                 subjects.forEach(s => {
-                    html += `<th class="pb-2.5 pr-3 font-medium whitespace-nowrap hidden sm:table-cell">${s}</th>`;
+                    html += `<th class="pb-2.5 pr-3 font-medium whitespace-nowrap hidden sm:table-cell">${displayName(s)}</th>`;
                 });
                 html += `<th class="pb-2.5 font-medium whitespace-nowrap hidden sm:table-cell">Rata²</th>`;
                 thead.innerHTML = html;
@@ -1157,17 +1275,21 @@
             noDataTable.classList.add('hidden');
 
             records.forEach(r => {
-                const d = parseIndonesianDate(r.tanggal);
-                let dateStr = r.tanggal;
-                if (d) {
-                    dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                let dateLabel;
+                const num = parseInt(r.tanggal);
+                if (!isNaN(num) && String(num) === String(r.tanggal).trim()) {
+                    dateLabel = `Tes ke-${r.tesKe}`;
+                } else {
+                    const d = parseDate(r.tanggal);
+                    dateLabel = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
                 }
+                
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-gray-50 hover:bg-gray-50/40 transition-colors';
 
                 let html = `
                     <td class="py-3 pr-3 text-gray-400 text-xs font-medium">${r.tesKe}</td>
-                    <td class="py-3 pr-3 text-gray-700 text-sm whitespace-nowrap">${dateStr}</td>
+                    <td class="py-3 pr-3 text-gray-700 text-sm whitespace-nowrap">${dateLabel}</td>
                     <td class="py-3 pr-3 font-semibold text-indigo-600">${r.totalSkor}</td>
                 `;
                 subjects.forEach(s => {
@@ -1204,6 +1326,10 @@
 
         deselectBtn.addEventListener('click', deselectStudent);
         retryBtn.addEventListener('click', loadData);
+        
+        closeCorsWarning.addEventListener('click', () => {
+            corsWarning.classList.add('hidden');
+        });
 
         document.addEventListener('click', function(e) {
             if (!e.target.closest('#searchInput') && !e.target.closest('#searchResults') && !e.target.closest('#clearSearchBtn')) {
